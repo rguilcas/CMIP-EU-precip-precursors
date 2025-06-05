@@ -23,30 +23,30 @@ def parse_args(arg_list=None):
                         help='name of simulation experiment, e.g. historical, ssp370.')
     parser.add_argument('--member', type=str, required=True,
                         help='which ensemble member to retrieve.')
-    parser.add_argument('--server', type=str, default='',
+    parser.add_argument('--server', type=str, default=None,
                         help="Which esgf server to use. Change this to one of the available if the default doesn't work.")
     return parser.parse_args(arg_list)
 
 
-def main(model ='IPSL-CM6A-LR',experiment = 'historical',member='r1i1p1f1', server=None):
+def main(model,experiment,member, server=None):
     for variable in ['ua','va']:
         retrieve_data_single_variable(model=model, 
                     experiment=experiment,
                     member_id=member,
                     variable=variable,
                     select_plev=True,
-                    plev=85000, server=server, grid='gr')
+                    plev=85000, server=server)
     retrieve_data_single_variable(model=model, 
                 experiment=experiment,
                 member_id=member,
                 variable='zg',
                 select_plev=True,
-                plev=50000, server=server, grid='gr')
+                plev=50000, server=server)
     retrieve_data_single_variable(model=model, 
             experiment=experiment,
             member_id=member,
             variable='pr',
-            select_plev=False,server=server, grid='gr')
+            select_plev=False,server=server)
             
 
 def retrieve_data_single_variable(model, experiment, member_id, variable, select_plev, plev=85000,**path_kwargs):
@@ -75,7 +75,6 @@ def retrieve_data_single_variable(model, experiment, member_id, variable, select
 
 if __name__=='__main__':
     args = parse_args()
-        
     cluster = LocalCluster(n_workers=10, memory_limit='8GiB')
     client = Client(cluster)
     print('Access dask dashboard: ', client.dashboard_link)

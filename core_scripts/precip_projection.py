@@ -5,6 +5,7 @@ import os
 import numpy as np
 import pint_xarray
 from pint_xarray import unit_registry as ureg
+import sys
 
 def parse_args(arg_list=None):
     parser = argparse.ArgumentParser(description="Aggregate variable over ERA5 region masks.")
@@ -54,7 +55,6 @@ def get_save_path(args):
 def load_input_field(args):
     indir=f'{args.inputdir}raw/{args.model}/{args.variable}/{args.experiment}/'
     filenames=[file for file in os.listdir(indir) if file.endswith('.nc')]
-
     if args.member=='': #single model case
         if len(filenames)>1:
             raise(IOError(f'Expected single file in input directory {indir} when --member flag is absent. Found {len(filenames)}.'))
@@ -63,8 +63,8 @@ def load_input_field(args):
         filenames=[file for file in filenames if file.find(f'_{args.member}_')!=-1]
         if len(filenames)>1:
             raise(IOError(f'Expected to find only one file in input directory {indir} containing string _{args.member}_. Found {len(filenames)}.'))
-    
-    data=xr.open_dataset(indir+filenames[0],
+    file_path = indir+filenames[0]
+    data=xr.open_dataset(file_path,
         chunks=dict(time=-1,lat=-1,lon=-1))[args.variable].chunk('auto')
     
     return data
@@ -111,7 +111,15 @@ def to_mm_day(da):
     Load and convert a precipitation DataArray to mm/day.
     Handles mass flux (e.g., kg/m^2/s) via water density, then strips units.
     """
-    da = da.load()
+    # da = da.load()
+    
+    # Some unit fixes to make pint work
+    if da.attrs['units'] == 'kg m-2 s-1':
+        da.attrs['units'] = 'kg/m^2/s'
+    for coord in ['lat', 'lon']:
+        if 'units' in da.coords[coord].attrs:
+            da.coords[coord].attrs['units'] = 'degrees'
+    # da.attrs['units'] = 'kg / m 2/ s'
     da = da.pint.quantify()
     try:
         # Try direct conversion (e.g. mm/day, m/s)
@@ -150,17 +158,18 @@ if __name__=='__main__':
 
     #load model precip data and interpolate it onto the mask grid
     targ_field=load_input_field(args)
-
     targ_field=ensure_lon_180(targ_field)
-
+    
     #This is an efficient way to do this, subselecting to the region around
     #the mask and then interpolating to the higher res.
     interpolated_targ_field=targ_field.sel(
             lat=slice(float(mask.lat.min()-1), float(mask.lat.max()+1)),
             lon=slice(float(mask.lon.min())-1, float(mask.lon.max()+1))
         ).interp_like(mask)
-    
+
     interpolated_targ_field=to_mm_day(interpolated_targ_field)    
+    
     #do the area averaging and save
     targ_indices=apply_region_masking_and_average(mask,interpolated_targ_field,regions)
     split_and_save_indices(targ_indices,outdir,regions,args)
+    sys.exit()
