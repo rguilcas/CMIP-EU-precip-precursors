@@ -103,7 +103,7 @@ def get_hist_data(args):
     
     for v in vars:
         vdir=f'{bp}{v}/{args.historical_experiment}/'
-        os.makedirs(vdir,exists_ok=True)
+        os.makedirs(vdir,exist_ok=True)
         a0=[]
         for mem in mems:
             if not_ens:
