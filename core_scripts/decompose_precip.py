@@ -221,9 +221,16 @@ if __name__=='__main__':
         for r in args.regions:
             decomp_path,term_path=get_savepaths(args,s,r)
 
-            decomposed_hazard=decompose_hazard_odds_ratio(ref_data.sel(season=s,region=r),
-                                                          hist_data.sel(season=s,region=r),
-                                                          future_data.sel(season=s,region=r),
+            # decomposed_hazard=decompose_hazard_odds_ratio(ref_data.sel(season=s,region=r),
+            #                                               hist_data.sel(season=s,region=r),
+            #                                               future_data.sel(season=s,region=r),
+            #                                             hazard_var,condition_var,
+            #                                             make_h_var_cat=make_h_var_cat,
+            #                                             p_dvs=p_dvs,
+            #                                             quantile=p,bin_num=bin_num)
+            decomposed_hazard=decompose_hazard_odds_ratio(ref_data.sel(season=s,region_id=r),
+                                                          hist_data.sel(season=s,region_id=r),
+                                                          future_data.sel(season=s,region_id=r),
                                                         hazard_var,condition_var,
                                                         make_h_var_cat=make_h_var_cat,
                                                         p_dvs=p_dvs,
