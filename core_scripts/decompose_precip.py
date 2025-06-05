@@ -138,14 +138,16 @@ def get_hist_data(args):
 def get_future_data(args):
     bp=f'{args.inputdir}{args.model}/'
 
-    vars=np.atleast_1d(args.variables).append(args.hazardvariable)
+    # vars=np.atleast_1d(args.variables).append(args.hazardvariable)
+    vars=list(np.atleast_1d(args.variables)) + [args.hazardvariable]
+
     ds=[]
     mems=np.atleast_1d(args.members)
     not_ens= (len(mems)==1) and (mems[0]=='')
     
     for v in vars:
         vdir=f'{bp}{v}/{args.future_experiment}/'
-        os.makedirs(vdir,exists_ok=True)
+        os.makedirs(vdir,exist_ok=True)
         a0=[]
         for mem in mems:
             if not_ens:
@@ -157,7 +159,8 @@ def get_future_data(args):
             for r in args.regions:
                 a2=[]
                 for s in args.seasons:
-                    da=xr.open_dataarray(f'{dir}+{args.season}_region{args.region_id}.nc')
+                    # da=xr.open_dataarray(f'{dir}_{args.season}_region{args.region_id}.nc')
+                    da=xr.open_dataarray(f'{dir}{s}_region{r}.nc')
                     a2.append(da.assign_coords(season=s))
                 a1.append(xr.concat(a2,'season').assign_coords(region_id=r))
 
@@ -171,8 +174,9 @@ def get_future_data(args):
     ds=xr.merge(ds)
 
     y0,y1=args.future_period
-    future_period=np.arange(y0,y1+1)
-    ds=ds.isel(np.isin(ds['time.year'],future_period))
+    # future_period=np.arange(y0,y1+1)
+    # ds=ds.isel(np.isin(ds['time.year'],future_period))
+    ds = ds.sel(time=slice(str(y0), str(y1)))
     return ds
 
 def get_savepaths(args,s,r):
