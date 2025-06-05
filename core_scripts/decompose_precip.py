@@ -67,16 +67,18 @@ def parse_args(arg_list=None):
 
 def get_ref_data(args):
     bp=f'{args.inputdir}{args.referencemodel}/'
-
-    vars=np.atleast_1d(args.variables).append(args.hazardvariable)
+    # vars=np.atleast_1d(args.variables).append(args.hazardvariable)
+    vars=list(np.atleast_1d(args.variables)) + [args.hazardvariable]
     ds=[]
     for v in vars:
         dir=f'{bp}{v}/{args.historical_experiment}/'
+        print(dir)
         a1=[]
         for r in args.regions:
             a2=[]
             for s in args.seasons:
-                da=xr.open_dataarray(f'{dir}+{args.season}_region{args.region_id}.nc')
+                # da=xr.open_dataarray(f'{dir}+{args.season}_region{args.region_id}.nc')
+                da=xr.open_dataarray(f'{dir}/{s}_region{r}.nc')
                 a2.append(da.assign_coords(season=s))
             a1.append(xr.concat(a2,'season').assign_coords(region_id=r))
         da=xr.concat(a1,'region_id')
