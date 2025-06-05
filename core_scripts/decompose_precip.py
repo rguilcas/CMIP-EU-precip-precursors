@@ -130,8 +130,9 @@ def get_hist_data(args):
     ds=xr.merge(ds)
 
     y0,y1=args.hist_period
-    hist_period=np.arange(y0,y1+1)
-    ds=ds.isel(np.isin(ds['time.year'],hist_period))
+    # hist_period=np.arange(y0,y1+1)
+    # ds=ds.isel(np.isin(ds['time.year'],hist_period))
+    ds = ds.sel(time=slice(str(y0), str(y1)))
     return ds
 
 def get_future_data(args):
