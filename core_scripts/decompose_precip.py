@@ -115,7 +115,8 @@ def get_hist_data(args):
             for r in args.regions:
                 a2=[]
                 for s in args.seasons:
-                    da=xr.open_dataarray(f'{dir}+{args.season}_region{args.region_id}.nc')
+                    # da=xr.open_dataarray(f'{dir}+{args.season}_region{args.region_id}.nc')
+                    da=xr.open_dataarray(f'{dir}/{s}_region{r}.nc')
                     a2.append(da.assign_coords(season=s))
                 a1.append(xr.concat(a2,'season').assign_coords(region_id=r))
 
