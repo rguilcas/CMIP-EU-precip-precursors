@@ -95,7 +95,8 @@ def get_ref_data(args):
 def get_hist_data(args):
     bp=f'{args.inputdir}{args.model}/'
 
-    vars=np.atleast_1d(args.variables).append(args.hazardvariable)
+    # vars=np.atleast_1d(args.variables).append(args.hazardvariable)
+    vars=list(np.atleast_1d(args.variables)) + [args.hazardvariable]
     ds=[]
     mems=np.atleast_1d(args.members)
     not_ens= (len(mems)==1) and (mems[0]=='')
