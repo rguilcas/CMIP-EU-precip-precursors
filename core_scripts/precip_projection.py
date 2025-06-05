@@ -66,7 +66,8 @@ def load_input_field(args):
     file_path = indir+filenames[0]
     data=xr.open_dataset(file_path,
         chunks=dict(time=-1,lat=-1,lon=-1))[args.variable].chunk('auto')
-    
+    # data=xr.open_dataset(file_path,
+    #     chunks=dict(time=365*10,lat=30,lon=30))[args.variable]
     return data
 
 def apply_region_masking_and_average(mask,field,regions,lon='lon',lat='lat'):
@@ -167,8 +168,6 @@ if __name__=='__main__':
             lon=slice(float(mask.lon.min())-1, float(mask.lon.max()+1))
         ).interp_like(mask)
 
-    interpolated_targ_field=to_mm_day(interpolated_targ_field)    
-    
     #do the area averaging and save
     targ_indices=apply_region_masking_and_average(mask,interpolated_targ_field,regions)
     split_and_save_indices(targ_indices,outdir,regions,args)

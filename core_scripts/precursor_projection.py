@@ -48,7 +48,7 @@ def parse_args(arg_list=None):
     parser.add_argument('--seasons', nargs='+', type=str, default=['DJF', 'MAM','JJA','SON'],
                     help='Which seasons to compute indices for.')
     
-    parser.add_argument('--regions', nargs='+', type=str, default=None,
+    parser.add_argument('--regions', nargs='+', type=int, default=None,
                 help='Which regions to compute indices for. Default is to use all regions in maskfile.')
     
     parser.add_argument('--lags', nargs='+', type=int, default=[0],
