@@ -136,6 +136,7 @@ def to_mm_day(da):
     return da.pint.dequantify()
 
 def average_data_per_region(mask, interpolated_targ_field):
+    attrs = interpolated_targ_field.attrs
     weights = xr.ones_like(interpolated_targ_field.isel(time=0, drop=True))*np.cos(np.deg2rad(interpolated_targ_field.lat))
 
     weights_sum_per_region = flox.xarray.xarray_reduce(
@@ -159,7 +160,20 @@ def average_data_per_region(mask, interpolated_targ_field):
     )
     
     timeseries_per_region = weighted_data_sum_per_region / weights_sum_per_region
+    timeseries_per_region.attrs = attrs
     return timeseries_per_region
+
+def split_and_save_indices_v2(timeseries_per_region,outdir,args):
+    for r in timeseries_per_region.tp.values:
+        ds_region = timeseries_per_region.sel(tp=r)
+        for s in np.atleast_1d(args.seasons):
+            ds_season_region = ds_region.where(ds_region.time.dt.season==s, drop=True)
+            savepath=outdir+f'{s}_region{int(r)}.nc'
+            if os.path.isfile(savepath) and not args.overwrite:
+                print(f'{savepath} exists and --overwrite not set. Passing.')
+            else:
+                ds_season_region.to_netcdf(savepath)
+    return
 
 if __name__=='__main__':
     args = parse_args()
@@ -183,10 +197,11 @@ if __name__=='__main__':
         regions=np.unique(mask.values)
         regions=[int(r) for r in regions if not np.isnan(r)]
     else:
-        regions=args.regions
+        regions=np.atleast_1d(args.regions)
 
     #load model precip data and interpolate it onto the mask grid
     targ_field=load_input_field(args)
+    attrs = targ_field.attrs
     
     targ_field=ensure_lon_180(targ_field)
     
@@ -197,12 +212,14 @@ if __name__=='__main__':
             lon=slice(float(mask.lon.min())-1, float(mask.lon.max()+1))
         ).interp_like(mask)
     
-    timeseries_per_region = average_data_per_region(mask, interpolated_targ_field).load()
-    
-    timeseries_per_region=to_mm_day(timeseries_per_region)   
+    timeseries_per_region = average_data_per_region(mask, interpolated_targ_field).sel(tp=regions).load()
+    timeseries_per_region.attrs = attrs
+    timeseries_per_region=to_mm_day(timeseries_per_region).rename('pr')
 
-    print(timeseries_per_region)
-    sys.exit()
+    split_and_save_indices_v2(timeseries_per_region,outdir,args)
+
+    # print(timeseries_per_region)
+    # sys.exit()
 
 
     # weights_sum_per_region = weights.groupby(mask).sum()
@@ -219,7 +236,7 @@ if __name__=='__main__':
     # timeseries_per_region.load()
     # print(timeseries_per_region.max('time'))
     
-    interpolated_targ_field=to_mm_day(interpolated_targ_field)    
+    # interpolated_targ_field=to_mm_day(interpolated_targ_field)    
     #do the area averaging and save
     # targ_indices = apply_region_masking_and_average(mask,interpolated_targ_field,regions)
     # split_and_save_indices(targ_indices,outdir,regions,args)
