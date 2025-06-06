@@ -65,7 +65,7 @@ def load_input_field(args):
             raise(IOError(f'Expected to find only one file in input directory {indir} containing string _{args.member}_. Found {len(filenames)}.'))
     file_path = indir+filenames[0]
     data=xr.open_dataset(file_path,
-        chunks=dict(time=-1,lat=-1,lon=-1))[args.variable].chunk('auto')
+        chunks=dict(time=365,lat=50,lon=50))[args.variable]#.chunk('auto')
     # data=xr.open_dataset(file_path,
     #     chunks=dict(time=365*10,lat=30,lon=30))[args.variable]
     return data
@@ -135,22 +135,22 @@ def to_mm_day(da):
     return da.pint.dequantify()
 
 if __name__=='__main__':
-
-    #use multi-core for speed
-    cluster = LocalCluster(n_workers=4, memory_limit='8GiB')
-    client = Client(cluster)
-    print('Access dask dashboard: ', client.dashboard_link)
-
     args = parse_args()
     args.variable='pr' #hardcoding this for now.
 
+    #use multi-core for speed
+    cluster = LocalCluster(n_workers=4, memory_limit='16GiB')
+    client = Client(cluster)
+    print('Access dask dashboard: ', client.dashboard_link)
+
+    
     #work out the full save directory
     outdir=get_save_path(args)
 
     #load mask with region ids encoded
     mask_path=args.auxdir+args.maskname
     mask=xr.open_dataarray(mask_path).load()
-
+    
     #use all regions in the mask if none specified
     if args.regions is None:
         regions=np.unique(mask.values)
@@ -160,24 +160,21 @@ if __name__=='__main__':
 
     #load model precip data and interpolate it onto the mask grid
     targ_field=load_input_field(args)
+    
     targ_field=ensure_lon_180(targ_field)
     
     #This is an efficient way to do this, subselecting to the region around
     #the mask and then interpolating to the higher res.
-    targ_field = targ_field.load()
 
 
     interpolated_targ_field=targ_field.sel(
             lat=slice(float(mask.lat.min()-1), float(mask.lat.max()+1)),
             lon=slice(float(mask.lon.min())-1, float(mask.lon.max()+1))
         ).interp_like(mask)
-
-    interpolated_targ_field=to_mm_day(interpolated_targ_field)    
-    sys.exit()
     interpolated_targ_field = interpolated_targ_field.load()
-    
+    interpolated_targ_field=to_mm_day(interpolated_targ_field)    
+
 
     #do the area averaging and save
     targ_indices = apply_region_masking_and_average(mask,interpolated_targ_field,regions)
     split_and_save_indices(targ_indices,outdir,regions,args)
-    sys.exit()
