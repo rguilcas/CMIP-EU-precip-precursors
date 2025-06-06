@@ -216,29 +216,5 @@ if __name__=='__main__':
     timeseries_per_region=to_mm_day(timeseries_per_region).rename('pr')
     attrs['units'] =timeseries_per_region.attrs['units']
     timeseries_per_region.attrs = attrs
-    print(timeseries_per_region.attrs)
 
     split_and_save_indices_v2(timeseries_per_region,outdir,args)
-
-    # print(timeseries_per_region)
-    # sys.exit()
-
-
-    # weights_sum_per_region = weights.groupby(mask).sum()
-    # from flox.xarray import xarray_reduce
-
-    # weighted_data_sum_per_region = xarray_reduce(
-    #     (weights * interpolated_targ_field),
-    #     group=mask,
-    #     func="sum"
-    # )
-    # # weighted_data_sum_per_region = (weights*interpolated_targ_field).groupby(mask).sum()
-    # timeseries_per_region = weighted_data_sum_per_region/weights_sum_per_region
-    # print(timeseries_per_region)
-    # timeseries_per_region.load()
-    # print(timeseries_per_region.max('time'))
-    
-    # interpolated_targ_field=to_mm_day(interpolated_targ_field)    
-    #do the area averaging and save
-    # targ_indices = apply_region_masking_and_average(mask,interpolated_targ_field,regions)
-    # split_and_save_indices(targ_indices,outdir,regions,args)
