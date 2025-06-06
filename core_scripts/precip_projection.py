@@ -168,6 +168,7 @@ def split_and_save_indices_v2(timeseries_per_region,outdir,args):
         ds_region = timeseries_per_region.sel(tp=r)
         for s in np.atleast_1d(args.seasons):
             ds_season_region = ds_region.where(ds_region.time.dt.season==s, drop=True)
+            ds_season_region.attrs = timeseries_per_region.attrs
             savepath=outdir+f'{s}_region{int(r)}.nc'
             if os.path.isfile(savepath) and not args.overwrite:
                 print(f'{savepath} exists and --overwrite not set. Passing.')
@@ -202,7 +203,6 @@ if __name__=='__main__':
     #load model precip data and interpolate it onto the mask grid
     targ_field=load_input_field(args)
     attrs = targ_field.attrs
-    
     targ_field=ensure_lon_180(targ_field)
     
     #This is an efficient way to do this, subselecting to the region around
@@ -213,8 +213,10 @@ if __name__=='__main__':
         ).interp_like(mask)
     
     timeseries_per_region = average_data_per_region(mask, interpolated_targ_field).sel(tp=regions).load()
-    timeseries_per_region.attrs = attrs
     timeseries_per_region=to_mm_day(timeseries_per_region).rename('pr')
+    attrs['units'] =timeseries_per_region.attrs['units']
+    timeseries_per_region.attrs = attrs
+    print(timeseries_per_region.attrs)
 
     split_and_save_indices_v2(timeseries_per_region,outdir,args)
 
