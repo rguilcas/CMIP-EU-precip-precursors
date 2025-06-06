@@ -6,7 +6,7 @@ import xarray as xr
 import cmipaccess as cmip 
 
 from dask.distributed import Client, LocalCluster
-
+from xarray.coding.times import CFDatetimeCoder
 from tqdm.notebook import tqdm
 
 import logging
@@ -51,11 +51,12 @@ def main(model,experiment,member, server=None):
 
 def retrieve_data_single_variable(model, experiment, member_id, variable, select_plev, plev=85000,**path_kwargs):
     path = cmip.esgf.get_path_CMIP6_data(model, experiment, member_id, variable, freq='day',table='day',**path_kwargs)
+    print(path)
     if select_plev:
         chunks = dict(plev=1, lon=50, lat=50, time=31*6)
     else:
         chunks = dict(lon=50, lat=50, time=365*5)
-    ds = xr.open_mfdataset(path, chunks = chunks)
+    ds = xr.open_mfdataset(path, chunks = chunks, decode_times=CFDatetimeCoder(use_cftime=True))
     if select_plev:
         ds = ds.sel(plev=plev)
     ds=ds.load()

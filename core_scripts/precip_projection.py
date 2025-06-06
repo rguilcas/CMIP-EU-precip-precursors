@@ -5,6 +5,7 @@ import os
 import numpy as np
 import pint_xarray
 from pint_xarray import unit_registry as ureg
+import flox.xarray
 import sys
 
 def parse_args(arg_list=None):
@@ -65,7 +66,7 @@ def load_input_field(args):
             raise(IOError(f'Expected to find only one file in input directory {indir} containing string _{args.member}_. Found {len(filenames)}.'))
     file_path = indir+filenames[0]
     data=xr.open_dataset(file_path,
-        chunks=dict(time=365,lat=50,lon=50))[args.variable]#.chunk('auto')
+        chunks=dict(time=365))[args.variable]#.chunk('auto')
     # data=xr.open_dataset(file_path,
     #     chunks=dict(time=365*10,lat=30,lon=30))[args.variable]
     return data
@@ -134,12 +135,38 @@ def to_mm_day(da):
     # Strip units which can mess up sums, return plain DataArray
     return da.pint.dequantify()
 
+def average_data_per_region(mask, interpolated_targ_field):
+    weights = xr.ones_like(interpolated_targ_field.isel(time=0, drop=True))*np.cos(np.deg2rad(interpolated_targ_field.lat))
+
+    weights_sum_per_region = flox.xarray.xarray_reduce(
+        weights,
+        mask,
+        func="sum",
+        expected_groups=None,
+        isbin=False,
+        method="map-reduce",
+    )
+
+    weighted_data_sum_per_region = flox.xarray.xarray_reduce(
+        weights*interpolated_targ_field,
+        mask,
+        func="sum",
+        expected_groups=np.unique(mask),
+        keepdims=False,
+        axes=("lat", "lon"),
+        isbin=False,
+        method="map-reduce",
+    )
+    
+    timeseries_per_region = weighted_data_sum_per_region / weights_sum_per_region
+    return timeseries_per_region
+
 if __name__=='__main__':
     args = parse_args()
     args.variable='pr' #hardcoding this for now.
 
     #use multi-core for speed
-    cluster = LocalCluster(n_workers=4, memory_limit='16GiB')
+    cluster = LocalCluster(n_workers=4, memory_limit='32GiB')
     client = Client(cluster)
     print('Access dask dashboard: ', client.dashboard_link)
 
@@ -165,16 +192,34 @@ if __name__=='__main__':
     
     #This is an efficient way to do this, subselecting to the region around
     #the mask and then interpolating to the higher res.
-
-
     interpolated_targ_field=targ_field.sel(
             lat=slice(float(mask.lat.min()-1), float(mask.lat.max()+1)),
             lon=slice(float(mask.lon.min())-1, float(mask.lon.max()+1))
         ).interp_like(mask)
-    interpolated_targ_field = interpolated_targ_field.load()
+    
+    timeseries_per_region = average_data_per_region(mask, interpolated_targ_field).load()
+    
+    timeseries_per_region=to_mm_day(timeseries_per_region)   
+
+    print(timeseries_per_region)
+    sys.exit()
+
+
+    # weights_sum_per_region = weights.groupby(mask).sum()
+    # from flox.xarray import xarray_reduce
+
+    # weighted_data_sum_per_region = xarray_reduce(
+    #     (weights * interpolated_targ_field),
+    #     group=mask,
+    #     func="sum"
+    # )
+    # # weighted_data_sum_per_region = (weights*interpolated_targ_field).groupby(mask).sum()
+    # timeseries_per_region = weighted_data_sum_per_region/weights_sum_per_region
+    # print(timeseries_per_region)
+    # timeseries_per_region.load()
+    # print(timeseries_per_region.max('time'))
+    
     interpolated_targ_field=to_mm_day(interpolated_targ_field)    
-
-
     #do the area averaging and save
-    targ_indices = apply_region_masking_and_average(mask,interpolated_targ_field,regions)
-    split_and_save_indices(targ_indices,outdir,regions,args)
+    # targ_indices = apply_region_masking_and_average(mask,interpolated_targ_field,regions)
+    # split_and_save_indices(targ_indices,outdir,regions,args)
