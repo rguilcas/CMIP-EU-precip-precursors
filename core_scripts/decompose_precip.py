@@ -238,6 +238,11 @@ if __name__=='__main__':
 
             bias_and_trend_terms=compute_terms_from_decomposition_with_alpha_blending(*[decomposed_hazard[i] for i in range(6)])
 
+            os.makedirs('/'.join(decomp_path.split('/')[:-1]), exist_ok=True)
+            os.makedirs('/'.join(term_path.split('/')[:-1]), exist_ok=True)
+            os.chmod('/'.join(decomp_path.split('/')[:-1]), 0o777)
+            os.chmod('/'.join(term_path.split('/')[:-1]), 0o777)
+
             decomposed_hazard.to_netcdf(decomp_path)
             bias_and_trend_terms.to_netcdf(term_path)
 
