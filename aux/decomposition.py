@@ -13,7 +13,6 @@ def _prep_and_decompose(decomp_func,output_func,ref_ds,h_model_ds,f_model_ds,h_v
     quantile_thresh=None
     PCs=None
     EOFs=None
-    
     #handle PCA projection (based on ref_ds variability) if needed.
     if s_var[:2]=='PC':
 
@@ -44,6 +43,7 @@ def _prep_and_decompose(decomp_func,output_func,ref_ds,h_model_ds,f_model_ds,h_v
         h_var=h_var+'_cat'
     
     #make sure we have binary event time series, or else I expect the computation will be wrong. If we change our mind we can delete this block.
+    
     unique_h_vals=[np.unique(ds[h_var]) for ds in [ref_ds,h_model_ds,f_model_ds]]
     try:
         assert np.all([unique_vals==[0,1] for unique_vals in unique_h_vals])

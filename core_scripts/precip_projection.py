@@ -1,4 +1,4 @@
-from dask.distributed import Client
+from dask.distributed import Client, LocalCluster
 import argparse
 import xarray as xr
 import os
@@ -112,14 +112,13 @@ def to_mm_day(da):
     Load and convert a precipitation DataArray to mm/day.
     Handles mass flux (e.g., kg/m^2/s) via water density, then strips units.
     """
-    # da = da.load()
     
     # Some unit fixes to make pint work
-    if da.attrs['units'] == 'kg m-2 s-1':
-        da.attrs['units'] = 'kg/m^2/s'
-    for coord in ['lat', 'lon']:
-        if 'units' in da.coords[coord].attrs:
-            da.coords[coord].attrs['units'] = 'degrees'
+    # if da.attrs['units'] == 'kg m-2 s-1':
+    #     da.attrs['units'] = 'kg/m^2/s'
+    # for coord in ['lat', 'lon']:
+    #     if 'units' in da.coords[coord].attrs:
+    #         da.coords[coord].attrs['units'] = 'degrees'
     # da.attrs['units'] = 'kg / m 2/ s'
     da = da.pint.quantify()
     try:
@@ -138,7 +137,9 @@ def to_mm_day(da):
 if __name__=='__main__':
 
     #use multi-core for speed
-    client=Client(n_workers=4,threads_per_worker=1)
+    cluster = LocalCluster(n_workers=4, memory_limit='8GiB')
+    client = Client(cluster)
+    print('Access dask dashboard: ', client.dashboard_link)
 
     args = parse_args()
     args.variable='pr' #hardcoding this for now.
@@ -163,12 +164,20 @@ if __name__=='__main__':
     
     #This is an efficient way to do this, subselecting to the region around
     #the mask and then interpolating to the higher res.
+    targ_field = targ_field.load()
+
+
     interpolated_targ_field=targ_field.sel(
             lat=slice(float(mask.lat.min()-1), float(mask.lat.max()+1)),
             lon=slice(float(mask.lon.min())-1, float(mask.lon.max()+1))
         ).interp_like(mask)
 
+    interpolated_targ_field=to_mm_day(interpolated_targ_field)    
+    sys.exit()
+    interpolated_targ_field = interpolated_targ_field.load()
+    
+
     #do the area averaging and save
-    targ_indices=apply_region_masking_and_average(mask,interpolated_targ_field,regions)
+    targ_indices = apply_region_masking_and_average(mask,interpolated_targ_field,regions)
     split_and_save_indices(targ_indices,outdir,regions,args)
     sys.exit()
