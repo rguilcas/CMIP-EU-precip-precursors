@@ -243,6 +243,6 @@ if __name__=='__main__':
             os.chmod('/'.join(decomp_path.split('/')[:-1]), 0o777)
             os.chmod('/'.join(term_path.split('/')[:-1]), 0o777)
 
-            decomposed_hazard.to_netcdf(decomp_path)
+            decomposed_hazard.rename('decomposition').to_netcdf(decomp_path)
             bias_and_trend_terms.to_netcdf(term_path)
 
