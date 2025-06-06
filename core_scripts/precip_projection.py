@@ -214,7 +214,7 @@ if __name__=='__main__':
     
     timeseries_per_region = average_data_per_region(mask, interpolated_targ_field).sel(tp=regions).load()
     timeseries_per_region=to_mm_day(timeseries_per_region).rename('pr')
-    attrs['units'] =timeseries_per_region.attrs['units']
-    timeseries_per_region.attrs = attrs
+    # attrs['units'] =timeseries_per_region.attrs['units']
+    # timeseries_per_region.attrs = attrs
 
     split_and_save_indices_v2(timeseries_per_region,outdir,args)

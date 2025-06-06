@@ -3,7 +3,6 @@ import numpy as np
 from sklearn.decomposition import PCA
 
 def decompose_hazard_odds_ratio(ref_ds,h_model_ds,f_model_ds,h_var,s_var,bin_num=5,p_dvs=None,make_h_var_cat=False,quantile=None):
-
     return _prep_and_decompose(binned_decomposition,return_decomp_as_dataarray,ref_ds,h_model_ds,f_model_ds,h_var,s_var,bin_num,p_dvs,make_h_var_cat,quantile)
 
 def _prep_and_decompose(decomp_func,output_func,ref_ds,h_model_ds,f_model_ds,h_var,s_var,bin_num,p_dvs,make_h_var_cat,quantile):
@@ -58,9 +57,17 @@ def _prep_and_decompose(decomp_func,output_func,ref_ds,h_model_ds,f_model_ds,h_v
     Ph_s_0, P_s_0 = decomp_func(ref_ds,h_var,s_var,bins)
 
     assert (Ph_s_0[0]==0)&(Ph_s_0[-1]==0)
+############
+    attrs_h_model_ds = h_model_ds[s_var].attrs
+    h_model_ds[s_var].attrs = {}
+    attrs_f_model_ds = f_model_ds[s_var].attrs
+    f_model_ds[s_var].attrs = {}
 
     Ph_s_h, P_s_h = decomp_func(h_model_ds,h_var,s_var,bins)
     Ph_s_f, P_s_f = decomp_func(f_model_ds,h_var,s_var,bins)
+
+    h_model_ds[s_var].attrs = attrs_h_model_ds
+    f_model_ds[s_var].attrs = attrs_f_model_ds
 
     return output_func([Ph_s_0,Ph_s_h,Ph_s_f,P_s_0,P_s_h,P_s_f])
 
@@ -76,8 +83,9 @@ def return_decomp_as_dataarray(data):
 
 def binned_decomposition(ds,h_var,s_var,bins):
     """helper func for decompose_hazard_odds_ratio"""
+    # print(ds)
+    # print(ds[s_var])
     Ph_s=ds.groupby_bins(s_var,bins=bins).mean()[h_var].fillna(0) #average value of hazard in bin. Is a probability for binary data. Bins with no hazard risk get a 0
-    
     P_s=ds.groupby_bins(s_var,bins=bins).count()[s_var].fillna(0)/len(ds[s_var]) #occurence prob of synoptic bin. Bins that don't occur get a 0.
 
     return Ph_s, P_s
