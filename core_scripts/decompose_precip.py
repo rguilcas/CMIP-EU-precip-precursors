@@ -183,7 +183,7 @@ def get_savepaths(args,s,r):
     s1=f'{args.savedir}/{args.model}/'
     
     s2=f'{s}_region{r}.nc'
-    return s1+'decomp'+s2, s1+'terms'+s2
+    return s1+'decomp_'+s2, s1+'terms_'+s2
 
 if __name__=='__main__':
 
