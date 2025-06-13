@@ -51,7 +51,6 @@ def main(model,experiment,member, server=None):
 
 def retrieve_data_single_variable(model, experiment, member_id, variable, select_plev, plev=85000,**path_kwargs):
     path = cmip.esgf.get_path_CMIP6_data(model, experiment, member_id, variable, freq='day',table='day',**path_kwargs)
-    print(path)
     if select_plev:
         chunks = dict(plev=1, lon=50, lat=50, time=31*6)
     else:
