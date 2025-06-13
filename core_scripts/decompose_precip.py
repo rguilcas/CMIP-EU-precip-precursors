@@ -39,7 +39,7 @@ def parse_args(arg_list=None):
     parser.add_argument('--historical_experiment', type=str, default='historical',
                     help='name of experiment with historical overlap')
 
-    parser.add_argument('--hist_period',type=int,nargs=2,default=[1979,2015],
+    parser.add_argument('--hist_period',type=int,nargs=2,default=[1979,2014],
                         help='The historical period to use.')
 
     parser.add_argument('--future_period',type=int,nargs=2,default=[2060,2100],
