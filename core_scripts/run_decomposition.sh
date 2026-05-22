@@ -19,6 +19,8 @@ FUTUREEXP="ssp370" #optional as --futureexp, if "none" is passed, will skip futu
 HISTPERIOD=(1979 2014) # optional as --histperiod
 FUTUREPERIOD=(2060 2100) # optional as --futureperiod
 ENSNAME="ens"
+HISTVARIABLES="z500 u850 v850"
+FUTUREVARIABLES="z500_detrend u850 v850"
 INPUTDIR="/Data/skd/projects/global/cmip6_precursors/outputs/indices/"
 SAVEDIR="/Data/skd/projects/global/cmip6_precursors/outputs/"
 AUXDIR="/Data/skd/projects/global/cmip6_precursors/aux/decomp_parameter_files/"
@@ -49,17 +51,19 @@ fi
 ##We assume the ERA5 data is in place, but this can be uncommented to re-run / extend as needed. 
 ##Note that the reference PCA, bins, and thresholds will need to be re-computed if the historical period is changed, 
 ##or if the input data is changed in a way that would impact the PCA patterns or index distributions (e.g. using a different variable, or changing the lag).
-python decompose_precip.py --model ERA5 --experiment historical --time_period ${HISTPERIOD[@]} \
- --inputdir $INPUTDIR \
- --savedir $SAVEDIR \
- --auxdir $AUXDIR \
- --ref 
+#python decompose_precip.py --model ERA5 --experiment historical --time_period ${HISTPERIOD[@]} \
+# --inputdir $INPUTDIR \
+# --savedir $SAVEDIR \
+# --auxdir $AUXDIR \
+# --variables $HISTVARIABLES \
+# --ref 
 
 python decompose_precip.py --model $MODEL --experiment $HISTEXP --time_period ${HISTPERIOD[@]} \
  --members ${MEMBERS[@]} \
  --inputdir $INPUTDIR \
  --savedir $SAVEDIR \
  --auxdir $AUXDIR \
+  --variables $HISTVARIABLES \
  --ref_pca $REFPCA \
  --ref_bins $REFBINS \
  --ref_thresh $REFTHRESH \
@@ -72,6 +76,7 @@ if [ "$FUTUREEXP" != "none" ]; then
     --inputdir $INPUTDIR \
     --savedir $SAVEDIR \
     --auxdir $AUXDIR \
+    --variables $FUTUREVARIABLES \
     --ref_pca $REFPCA \
     --ref_bins $REFBINS \
     --ref_thresh $REFTHRESH \
