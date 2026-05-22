@@ -299,8 +299,8 @@ def project_onto_precursor_indices_and_save(ds,patterns,params,args):
             #adds all metadata from index generation into each index
             #save
             for savepath,dv in zip(save_paths,list(indices.data_vars)):
-                if 'z500_detrend' in savepath:
-                    savepath = savepath.replace("z500_detrend", "z500")
+                # if 'z500_detrend' in savepath:
+                #     savepath = savepath.replace("z500_detrend", "z500")
                 da=indices[dv]
                 da.attrs = make_serializable_attrs(args)
                 da = strip_char_dim_name_encoding(da)
